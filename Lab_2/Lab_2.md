@@ -761,7 +761,7 @@ ip route 10.21.11.0 255.255.255.252 16.28.2.2
 ip route 30.40.22.0 255.255.255.0 16.28.2.2
 ip route 30.40.33.0 255.255.255.0 16.28.2.2
 
-ip route 30.40.1.0 255.255.255.252 169.195.3.1
+ip route 30.40.1.0 255.255.255.252 169.195.2.1
 ip route 30.40.11.0 255.255.255.0 16.28.2.2
 
 ip route 16.28.1.0 255.255.255.252 16.28.2.2
@@ -788,6 +788,189 @@ ip route 10.10.40.0 255.255.255.0 16.28.2.2
 ip route 10.10.50.0 255.255.255.0 16.28.2.2
 ip route 10.10.60.0 255.255.255.0 16.28.2.2
 
+exit
+write
+```
+### Linux-Router-1:
+#### ip forwarding:
+```
+echo 1 > /proc/sys/net/ipv4/ip_forward
+```
+#### ens3:
+```
+nano /etc/systemd/network/10-ens3.network
+[Match]
+Name=ens3
+
+[Network]
+Address=169.195.2.1/24
+Gateway=169.195.2.2
+
+[Route]  
+Destination=172.170.1.0/24  
+Gateway=169.195.2.2
+
+[Route]  
+Destination=172.170.2.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=172.170.3.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=182.210.1.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=182.210.2.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=182.210.3.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=169.195.1.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=169.195.2.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=169.195.3.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=10.21.11.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=30.40.22.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=30.40.33.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=30.40.11.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=16.28.1.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=16.28.2.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=16.28.3.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=17.26.1.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=17.26.2.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=17.26.3.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=10.20.10.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=30.40.2.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=30.40.3.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=18.30.1.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=18.30.2.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=18.30.3.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=10.26.0.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=10.27.0.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=10.29.0.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=10.30.0.0/30  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=10.10.10.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=10.10.20.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=10.10.30.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=10.10.40.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=10.10.50.0/24  
+Gateway=169.195.2.2  
+  
+[Route]  
+Destination=10.10.60.0/24  
+Gateway=169.195.2.2
+```
+#### ens4:
+```
+nano /etc/systemd/network/10-ens4.network
+[Match]
+Name=ens4
+
+[Network]
+Address=30.40.1.2/30
+
+systemctl reload systemd-networkd
+```
+### Switch-2:
+```
+enable
+conf t
+
+hostname IFomin-Switch-2
+
+int e0/0
+switchport mode access 
+description "To Linux-Router-1"
+int e0/1
+switchport mode access 
+
+exit
 exit
 write
 ```
@@ -1036,6 +1219,191 @@ ip route 10.10.60.0 255.255.255.0 30.40.2.2
 exit
 write
 ```
+### Linux-Router-2_:
+#### ip forwarding:
+```
+echo 1 > /proc/sys/net/ipv4/ip_forward
+```
+#### ens3:
+```
+nano /etc/systemd/network/10-ens3.network
+[Match]
+Name=ens3
+
+[Network]
+Address=30.40.22.1/24
+Gateway=30.40.22.2
+
+[Route]  
+Destination=172.170.1.0/24  
+Gateway=30.40.22.2
+
+[Route]  
+Destination=172.170.2.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=172.170.3.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=182.210.1.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=182.210.2.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=182.210.3.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=169.195.1.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=169.195.2.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=169.195.3.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=10.21.11.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=30.40.22.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=30.40.33.0/24  
+Gateway=30.40.22.2
+
+[Route]  
+Destination=30.40.1.0/30
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=16.28.1.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=16.28.2.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=16.28.3.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=17.26.1.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=17.26.2.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=17.26.3.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=10.20.10.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=30.40.2.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=30.40.3.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=18.30.1.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=18.30.2.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=18.30.3.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=10.26.0.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=10.27.0.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=10.29.0.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=10.30.0.0/30  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=10.10.10.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=10.10.20.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=10.10.30.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=10.10.40.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=10.10.50.0/24  
+Gateway=30.40.22.2  
+  
+[Route]  
+Destination=10.10.60.0/24  
+Gateway=30.40.22.2
+```
+#### ens4:
+```
+nano /etc/systemd/network/10-ens4.network
+[Match]
+Name=ens4
+
+[Network]
+Address=30.40.11.2/24
+```
+
+```
+systemctl reload systemd-networkd
+```
+### Switch-90:
+```
+enable
+conf t
+
+hostname IFomin-Switch-90
+
+int e0/0
+switchport mode access 
+description "To Linux-Router-2"
+int e0/1
+switchport mode access 
+
+exit
+exit
+write
+```
 ### C-R-4-3:
 ```
 enable
@@ -1101,6 +1469,11 @@ write
 ip 10.21.11.1 255.255.255.252 10.21.11.2
 save
 ```
+### VPC-65:
+```
+ip 30.40.11.1 255.255.255.0 30.40.11.2
+save
+```
 ### VPC-66:
 ```
 ip 30.40.33.1 255.255.255.0 30.40.33.2
@@ -1125,6 +1498,11 @@ save
 ### VPC-50:
 ```
 ip 169.195.1.1 255.255.255.0 169.195.1.2
+save
+```
+### VPC-51:
+```
+ip 30.40.1.1 255.255.255.252 30.40.1.2
 save
 ```
 ### VPC-52:
