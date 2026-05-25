@@ -1,3 +1,16 @@
+## Предустановка
+Тут нам понадобится debian с библиотекой FRR, вы можете попытаться настроить интернет в лабораторной (это делается в 5 лабораторной) и скачать библиотеку внутри pnet-lab.  
+Я же сделал отдельный образ debian в который заранее скачал эту библиотеку.  
+Скачиваете его: [debian-12-generic-amd64-frr.qcow2 — Яндекс Диск](https://disk.yandex.ru/d/0bl1QI4kBmjFUA)
+Далее его нужно положить в `/opt/unetlab/addons/qemu/linux-Debian-12-FRR` внутри виртуальной машины. Покажу на примере linux системы, на винде либо есть такие же утилиты в powershell, либо используйте например PuTTY и PSCP:
+```bash
+scp ~/Downloads/debian-12-generic-amd64-frr.qcow2 root@192.168.52.128:/opt/unetlab/addons/qemu/
+Пароль: eve
+
+ssh root@192.168.52.128 "mkdir /opt/unetlab/addons/qemu/linux-Debian-12-FRR && mv /opt/unetlab/addons/qemu/debian-12-generic-amd64-frr.qcow2 /opt/unetlab/addons/qemu/linux-Debian-12-FRR/hda.qcow2"
+Пароль: eve
+```
+Теперь мы можем выбрать образ linux-Debian-12-FRR в pnet, перезагружать ничего не надо
 ## RIP
 ### C-RIP-1
 ```
@@ -399,6 +412,184 @@ add network=186.22.48.0/30
 add network=93.56.240.0/30
 add network=93.46.46.0/30
 ```
+### L-RIP-12
+Нужно выбрать образ в котором есть FRR: [Установка тут](#Предустановка)
+Теперь настройка L-RIP-12, user: root :
+```
+echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+```
+
+```
+nano /etc/systemd/network/10-ens3.network
+[Match]
+Name=ens3
+
+[Network]
+Address=93.46.46.1/30
+Gateway=93.46.46.2
+```
+
+```
+nano /etc/systemd/network/10-ens4.network
+[Match]
+Name=ens4
+
+[Network]
+Address=10.21.12.2/24
+```
+
+```
+systemctl enable frr
+systemctl start frr
+
+nano /etc/frr/daemons
+нужно заменить строку
+ripd=no
+на строку
+ripd=yes
+```
+
+```
+systemctl restart frr
+```
+
+```
+vtysh
+
+conf t
+router rip
+version 2
+network 93.46.46.0/30
+network 10.21.12.0/24
+do wr
+exit
+exit
+exit
+```
+
+```
+systemctl reload systemd-networkd
+systemctl restart frr
+```
+
+```
+чтобы проверить что все маршруты получены
+vtysh -c "show ip route rip"
+```
+
+### Switch-RIP-2
+```
+enable
+conf t
+
+hostname IFomin-Switch-RIP-2
+
+int e0/0
+switchport mode access 
+description "To L-RIP-12"
+int e0/1
+switchport mode access 
+
+exit
+exit
+write
+```
+
+### VPC-93
+```
+ip 10.21.12.1 255.255.255.0 10.21.12.2
+save
+```
+
+### L-RIP-11
+Нужно выбрать образ в котором есть FRR: [Установка тут](#Предустановка)
+Теперь настройка L-RIP-11, user: root :
+```
+echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+sysctl -p
+```
+
+```
+nano /etc/systemd/network/10-ens3.network
+[Match]
+Name=ens3
+
+[Network]
+Address=75.110.46.2/30
+Gateway=75.110.46.1
+```
+
+```
+nano /etc/systemd/network/10-ens4.network
+[Match]
+Name=ens4
+
+[Network]
+Address=10.20.11.2/24
+```
+
+```
+systemctl enable frr
+systemctl start frr
+
+nano /etc/frr/daemons
+нужно заменить строку
+ripd=no
+на строку
+ripd=yes
+```
+
+```
+systemctl restart frr
+```
+
+```
+vtysh
+
+conf t
+router rip
+version 2
+network 75.110.46.0/30
+network 10.20.11.0/24
+do wr
+exit
+exit
+exit
+```
+
+```
+systemctl reload systemd-networkd
+systemctl restart frr
+```
+
+```
+чтобы проверить что все маршруты получены
+vtysh -c "show ip route rip"
+```
+
+### Switch-RIP-1
+```
+enable
+conf t
+
+hostname IFomin-Switch-RIP-1
+
+int e0/0
+switchport mode access 
+description "To L-RIP-11"
+int e0/1
+switchport mode access 
+
+exit
+exit
+write
+```
+
+### VPC-92
+```
+ip 10.20.11.1 255.255.255.0 10.20.11.2
+save
+```
 
 ## OSPF
 ### C-OSPF-4
@@ -449,15 +640,14 @@ no shutdown
 
 int e0/3
 Description "To IFomin-Extra-Net-2"
+no shutdown
 
 router ospf 1
 network 12.21.12.0 0.0.0.3 area 0
 network 12.23.10.16 0.0.0.3 area 0
 network 12.22.16.0 0.0.0.3 area 0
 
-exit
-exit
-wr
+do wr
 ```
 
 ### C-OSPF-3
@@ -490,6 +680,7 @@ router ospf 1
 network 12.23.10.12 0.0.0.3 area 0
 network 12.22.17.0 0.0.0.3 area 0
 network 12.23.10.8 0.0.0.3 area 0
+network 12.23.20.0 0.0.0.3 area 0
 
 redistribute connected
 
@@ -542,6 +733,7 @@ add address=12.22.12.2/30 interface=ether1 disabled=no comment="To IFomin-M-OSPF
 add address=12.21.11.2/30 interface=ether2 disabled=no comment="To IFomin-M-OSPF-2"
 add address=12.22.15.1/30 interface=ether3 disabled=no comment="To IFomin-M-OSPF-5"
 add address=12.21.12.1/30 interface=ether4 disabled=no comment="To IFomin-C-OSPF-5"
+add address=12.27.22.1/30 interface=ether5 disabled=no comment="To IFomin-L-OSPF-1"
 
 /interface bridge add name=loopback
 /ip address add interface=loopback address=10.255.255.4/32
@@ -551,6 +743,7 @@ network add network=12.21.11.0/30 area=backbone
 network add network=12.22.12.0/30 area=backbone
 network add network=12.22.15.0/30 area=backbone
 network add network=12.21.12.0/30 area=backbone
+network add network=12.27.22.0/30 area=backbone
 ```
 
 ### C-OSPF-2
@@ -641,6 +834,7 @@ instance set 0 router-id=10.255.255.2
 network add network=12.21.10.0/30 area=backbone
 network add network=12.22.11.0/30 area=backbone
 network add network=12.21.11.0/30 area=backbone
+network add network=12.23.21.0/30 area=backbone
 ```
 
 ### C-OSPF-1
@@ -704,6 +898,199 @@ add name=BGP300 as=300 redistribute-connected=yes redistribute-ospf=yes router-i
 add instance=BGP300 remote-address=18.11.1.1 remote-as=200
 add instance=BGP300 remote-address=14.11.1.1 remote-as=100
 add instance=BGP300 remote-address=15.11.1.1 remote-as=400
+```
+
+### Linux-PC-OSPF
+```
+nano /etc/systemd/network/10-ens3.network
+[Match]
+Name=ens3
+
+[Network]
+Address=12.23.21.1/30
+Gateway=12.23.21.2
+```  
+
+```
+systemctl reload systemd-networkd
+```
+
+### L-OSPF-2
+Нужно выбрать образ в котором есть FRR: [Установка тут](#Предустановка)
+Теперь настройка L-OSPF-2, user: root :
+```
+echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+sysctl -p
+```
+
+```
+nano /etc/systemd/network/10-ens3.network
+[Match]
+Name=ens3
+
+[Network]
+Address=12.23.20.2/30
+Gateway=12.23.20.1
+```
+
+```
+nano /etc/systemd/network/10-ens4.network
+[Match]
+Name=ens4
+
+[Network]
+Address=10.20.13.2/24
+```
+
+```
+systemctl enable frr
+systemctl start frr
+
+nano /etc/frr/daemons
+нужно заменить строку
+ospfd=no
+на строку
+ospfd=yes
+```
+
+```
+systemctl restart frr
+```
+
+```
+vtysh
+
+conf t
+router ospf
+network 12.23.20.0/30 area 0
+network 10.20.13.0/24 area 0
+do wr
+exit
+exit
+exit
+```
+
+```
+systemctl reload systemd-networkd
+systemctl restart frr
+```
+
+```
+чтобы проверить что все маршруты получены
+vtysh -c "show ip route ospf"
+```
+
+### Switch-OSPF-2
+```
+enable
+conf t
+
+hostname IFomin-Switch-OSPF-2
+
+int e0/0
+switchport mode access 
+description "To L-OSPF-2"
+int e0/1
+switchport mode access 
+
+exit
+exit
+write
+```
+
+### VPC-94
+```
+ip 10.20.13.1 255.255.255.0 10.20.13.2
+save
+```
+
+### L-OSPF-1
+Нужно выбрать образ в котором есть FRR: [Установка тут](#Предустановка)
+Теперь настройка L-OSPF-1, user: root :
+```
+echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+sysctl -p
+```
+
+```
+nano /etc/systemd/network/10-ens3.network
+[Match]
+Name=ens3
+
+[Network]
+Address=12.27.22.2/30
+Gateway=12.27.22.1
+```
+
+```
+nano /etc/systemd/network/10-ens4.network
+[Match]
+Name=ens4
+
+[Network]
+Address=10.20.14.2/24
+```
+
+```
+systemctl enable frr
+systemctl start frr
+
+nano /etc/frr/daemons
+нужно заменить строку
+ospfd=no
+на строку
+ospfd=yes
+```
+
+```
+systemctl restart frr
+```
+
+```
+vtysh
+
+conf t
+router ospf
+network 12.27.22.0/30 area 0
+network 10.20.14.0/24 area 0
+do wr
+exit
+exit
+exit
+```
+
+```
+systemctl reload systemd-networkd
+systemctl restart frr
+```
+
+```
+чтобы проверить что все маршруты получены
+vtysh -c "show ip route ospf"
+```
+
+### Switch-OSPF-1
+```
+enable
+conf t
+
+hostname IFomin-Switch-OSPF-1
+
+int e0/0
+switchport mode access 
+description "To L-OSPF-1"
+int e0/1
+switchport mode access 
+
+exit
+exit
+write
+```
+
+### VPC-95
+```
+ip 10.20.14.1 255.255.255.0 10.20.14.2
+save
 ```
 
 ## eBGP
