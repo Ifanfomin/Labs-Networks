@@ -427,7 +427,7 @@ router bgp 400
 
  network 13.10.4.0 mask 255.255.255.0
  network 13.10.8.0 mask 255.255.255.0
- network 13.8.10.0 mask 255.255.255.0
+ network 13.10.10.0 mask 255.255.255.0
  network 13.32.13.0 mask 255.255.255.0
  network 13.32.16.0 mask 255.255.255.0
  network 13.32.17.0 mask 255.255.255.0
